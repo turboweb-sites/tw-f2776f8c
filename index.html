@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurboWeb — Access Restricted</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0f;
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+            filter: blur(1px);
+        }
+
+        .code-rain {
+            position: absolute;
+            top: 0;
+            font-size: 14px;
+            color: #00ff88;
+            animation: fall linear infinite;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100%); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .fake-interface {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            filter: blur(8px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .fake-sidebar {
+            position: absolute;
+            left: 0; top: 0;
+            width: 280px; height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+            border-right: 1px solid #2d2d4a;
+        }
+
+        .fake-project {
+            margin: 20px;
+            padding: 15px;
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid #7c3aed;
+            border-radius: 8px;
+        }
+
+        .fake-editor {
+            position: absolute;
+            left: 280px; top: 60px;
+            right: 400px; bottom: 0;
+            background: #12121a;
+        }
+
+        .fake-code-line {
+            padding: 4px 20px;
+            font-size: 13px;
+            color: #64748b;
+            border-left: 3px solid transparent;
+            animation: typeCode 2s infinite;
+        }
+
+        .fake-code-line:nth-child(odd) { color: #7c3aed; }
+        .fake-code-line:nth-child(3) { color: #00ff88; border-left-color: #00ff88; }
+
+        @keyframes typeCode {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .fake-chat {
+            position: absolute;
+            right: 0; top: 60px;
+            width: 400px; height: 100%;
+            background: #0f0f1a;
+            border-left: 1px solid #2d2d4a;
+        }
+
+        .fake-message {
+            margin: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            border-radius: 12px;
+            font-size: 12px;
+            animation: messageAppear 3s infinite;
+        }
+
+        @keyframes messageAppear {
+            0%, 100% { opacity: 0.3; transform: translateY(10px); }
+            50% { opacity: 0.8; transform: translateY(0); }
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.8) 100%);
+        }
+
+        .modal {
+            background: linear-gradient(145deg, #12121a 0%, #0a0a0f 100%);
+            border: 1px solid #ff0040;
+            border-radius: 16px;
+            padding: 50px;
+            max-width: 620px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 0 60px rgba(255,0,64,0.3), 0 0 120px rgba(255,0,64,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+            animation: modalPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes modalPulse {
+            0%, 100% { box-shadow: 0 0 60px rgba(255,0,64,0.3), 0 0 120px rgba(255,0,64,0.1); }
+            50% { box-shadow: 0 0 80px rgba(255,0,64,0.5), 0 0 150px rgba(255,0,64,0.2); }
+        }
+
+        .modal::before, .modal::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid #ff0040;
+        }
+
+        .modal::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .modal::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        .lock-container { text-align: center; margin-bottom: 25px; }
+
+        .lock-icon {
+            font-size: 50px;
+            animation: lockPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes lockPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255,0,64,0.5)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 40px rgba(255,0,64,0.8)); }
+        }
+
+        .alert-header { text-align: center; margin-bottom: 30px; }
+
+        .alert-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: #ff0040;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px #ff0040, 0 0 20px #ff0040, 0 0 40px #ff0040;
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 1px); }
+            94% { transform: translate(2px, -1px); }
+            96% { transform: translate(-1px, -1px); }
+            98% { transform: translate(1px, 1px); }
+        }
+
+        .alert-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .main-offer {
+            background: linear-gradient(90deg, rgba(124,58,237,0.1) 0%, rgba(0,255,136,0.1) 100%);
+            border-left: 3px solid #7c3aed;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .offer-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .offer-title span { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.5); }
+
+        .benefits-intro {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .benefits-list { list-style: none; margin-bottom: 25px; }
+
+        .benefits-list li {
+            padding: 12px 0 12px 35px;
+            position: relative;
+            font-size: 14px;
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .benefits-list li:last-child { border-bottom: none; }
+        .benefits-list li:hover { background: rgba(124,58,237,0.1); padding-left: 40px; }
+
+        .benefits-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0; top: 12px;
+            width: 22px; height: 22px;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #0a0a0f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0,255,136,0.4);
+        }
+
+        .highlight { color: #00ff88; font-weight: 600; }
+
+        .guarantee {
+            background: rgba(0,255,136,0.05);
+            border: 1px dashed rgba(0,255,136,0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+        }
+
+        .guarantee-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: #00ff88;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .guarantee-text { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+        .cta-section { text-align: center; }
+        .cta-text { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            color: #fff;
+            padding: 18px 40px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(124,58,237,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .cta-button:hover::before { left: 100%; }
+
+        .system-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #475569;
+            letter-spacing: 1px;
+        }
+
+        .blink { animation: blink 1s infinite; }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .modal { padding: 30px 25px; margin: 20px; }
+            .alert-title { font-size: 20px; letter-spacing: 2px; }
+            .benefits-list li { font-size: 13px; }
+            .cta-button { padding: 15px 30px; font-size: 12px; }
+            .fake-sidebar, .fake-chat { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrix"></div>
+
+    <div class="fake-interface">
+        <div class="fake-sidebar">
+            <div class="fake-project">
+                <div style="height: 12px; background: #7c3aed; border-radius: 4px; margin-bottom: 8px; width: 60%;"></div>
+                <div style="height: 8px; background: #2d2d4a; border-radius: 4px; width: 80%;"></div>
+            </div>
+            <div class="fake-project" style="opacity: 0.5;">
+                <div style="height: 12px; background: #00ff88; border-radius: 4px; margin-bottom: 8px; width: 70%;"></div>
+                <div style="height: 8px; background: #2d2d4a; border-radius: 4px; width: 50%;"></div>
+            </div>
+        </div>
+        <div class="fake-editor">
+            <div class="fake-code-line">const turboWeb = new AIAgent();</div>
+            <div class="fake-code-line">await turboWeb.generateWebsite({</div>
+            <div class="fake-code-line">  niche: "detailing",</div>
+            <div class="fake-code-line">  style: "premium",</div>
+            <div class="fake-code-line">  deploy: true</div>
+            <div class="fake-code-line">});</div>
+            <div class="fake-code-line">// Revenue: $490 per site ✓</div>
+        </div>
+        <div class="fake-chat">
+            <div class="fake-message">🤖 Генерирую сайт для автодетейлинга...</div>
+            <div class="fake-message" style="animation-delay: 1s; background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);">✅ Сайт готов за 47 секунд!</div>
+        </div>
+    </div>
+
+    <div class="scanlines"></div>
+
+    <div class="modal-overlay">
+        <div class="modal">
+            <div class="lock-container"><div class="lock-icon">🔐</div></div>
+
+            <div class="alert-header">
+                <h1 class="alert-title">⚠ ДОСТУП ОГРАНИЧЕН</h1>
+                <p class="alert-subtitle">ACCESS RESTRICTED • SYSTEM LOCKED</p>
+            </div>
+
+            <div class="main-offer">
+                <p class="offer-title">
+                    <span>TURBO WEB</span> — это не просто конструктор сайтов.<br>
+                    Это автоматизированная система заработка на рынке США.
+                </p>
+            </div>
+
+            <p class="benefits-intro">
+                Ты находишься в одном шаге от активации своего IT-бизнеса под ключ.<br>
+                Владельцы доступа к этой системе получают:
+            </p>
+
+            <ul class="benefits-list">
+                <li>Личных <span class="highlight">AI-агентов</span>, которые пишут код и дизайн за секунды</li>
+                <li>Доход от <span class="highlight">$5,000 в месяц</span>, работая из любой точки мира</li>
+                <li>Пошаговую инструкцию: где брать клиентов и как продавать им работу робота</li>
+                <li><span class="highlight">Никакого кода</span> — ты просто управляешь процессом</li>
+            </ul>
+
+            <div class="guarantee">
+                <p class="guarantee-title">💡 ГАРАНТИЯ ПРОСТОТЫ</p>
+                <p class="guarantee-text">
+                    Тебе не нужно быть программистом. Всё, что от тебя требуется — 
+                    следовать инструкциям и нажимать кнопки. Система делает 90% работы.
+                </p>
+            </div>
+
+            <div class="cta-section">
+                <p class="cta-text">
+                    Чтобы получить ключ активации и начать зарабатывать,<br>свяжись с администратором:
+                </p>
+                <a href="https://t.me/turbowebai" target="_blank" class="cta-button">
+                    <span>✈️</span>
+                    ПОЛУЧИТЬ ДОСТУП В TELEGRAM
+                </a>
+            </div>
+
+            <div class="system-info">
+                <span>SYSTEM v2.0 <span class="blink">●</span> OPERATIONAL</span>
+                <span>LICENSE: PENDING ACTIVATION</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const matrix = document.getElementById('matrix');
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン<>{}[]$#@!%^&*';
+        
+        function createCodeRain() {
+            const column = document.createElement('div');
+            column.className = 'code-rain';
+            column.style.left = Math.random() * 100 + '%';
+            column.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            
+            let text = '';
+            const length = Math.floor(Math.random() * 20) + 10;
+            for (let i = 0; i < length; i++) {
+                text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
+            }
+            column.innerHTML = text;
+            matrix.appendChild(column);
+            setTimeout(() => column.remove(), 5000);
+        }
+        
+        for (let i = 0; i < 30; i++) setTimeout(createCodeRain, i * 100);
+        setInterval(createCodeRain, 200);
+    </script>
+</body>
+</html>
